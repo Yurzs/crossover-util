@@ -29,7 +29,7 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
 
     name = "crossover"
     platforms = [Platform.macos]
-    arch = [Architecture.arm64]
+    arch = [Architecture.arm64, Architecture.x86_64]
 
     GPTK_PATH = Path("/Volumes/Evaluation environment for Windows games 2.0")
     APP_PATH = Path("/Applications/CrossOver.app/Contents/MacOS")
@@ -215,7 +215,11 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
                     importlib.import_module("crossover_util")
                 except ImportError:
                     subprocess.check_output(
-                        [sys.executable, "-m", "pip", "install", "--user", "crossover-util"]
+                        [
+                            arch, platform.machine(), 
+                            sys.executable, "-m", "pip", "install", "--user", "--upgrade",
+                            "crossover-util"
+                        ]
                     )
 
                 try:
