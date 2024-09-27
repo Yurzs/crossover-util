@@ -1,6 +1,5 @@
 import inspect
 import os
-import sys
 import time
 import webbrowser
 from pathlib import Path
@@ -166,7 +165,7 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
     def run_crossover(self, background: bool = False):
         """Run CrossOver."""
 
-        from plumbum.cmd import zsh, NOHUP
+        from plumbum.cmd import zsh
 
         ctx = PluginContext()
 
@@ -200,7 +199,7 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
             click.echo("CrossOver is already injected. Updating...")
 
         entrypoint = inspect.cleandoc(
-            f"""
+            """
                 #!/usr/bin/env python3
                 import syslog
                 import logging
@@ -212,8 +211,6 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
                 syslog.openlog("CrossOverUtil")
                 logging.basicConfig(filename="/tmp/crossover-util.log", level=logging.DEBUG)
 
-                tries = 0
-                
                 try:
                     importlib.import_module("crossover_util")
                 except ImportError:

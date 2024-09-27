@@ -2,14 +2,10 @@ import importlib
 import sys
 import subprocess
 from subprocess import STDOUT
-from unittest.mock import MagicMock
 
 from crossover_util.plugin.plugin import Plugin, clickable
 
-try:
-    import click
-except ImportError:
-    click = MagicMock()
+import click
 
 
 class DepsPlugin(Plugin):
@@ -76,7 +72,6 @@ class DepsPlugin(Plugin):
         self.cli_command("remove-plugin")(self.remove_extra_plugin)
 
     def on_load(self):
-        self.ensure_self()
         self.ensure_plugins()
         self.setup_cli()
 
@@ -96,18 +91,3 @@ class DepsPlugin(Plugin):
 
         if plugins_to_install:
             self.pip_install(*plugins_to_install)
-
-    def ensure_self(self):
-        """Ensure the plugin is installed."""
-
-        deps_to_install = set()
-
-        for dep in ["click", "pytz", "plumbum", "pydantic", "typing_extensions"]:
-            try:
-                importlib.import_module(dep)
-            except ImportError:
-                deps_to_install.add(dep)
-
-        if deps_to_install:
-            self.pip_install(*deps_to_install)
-            importlib.reload(importlib.import_module("crossover_util"))
