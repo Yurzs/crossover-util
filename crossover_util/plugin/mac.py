@@ -216,8 +216,9 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
                 except ImportError:
                     subprocess.check_output(
                         [
-                            arch, platform.machine(), 
+                            "arch", f"-{platform.machine()}", 
                             sys.executable, "-m", "pip", "install", "--user", "--upgrade",
+                            "--ignore-installed",
                             "crossover-util"
                         ]
                     )
