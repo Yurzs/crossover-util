@@ -4,7 +4,7 @@ import platform
 import sys
 import typing
 from enum import Enum
-from functools import cached_property, partial
+from functools import partial
 from typing import List, Type
 
 
@@ -33,20 +33,21 @@ class Plugin:
 
     def __init__(self, config: "UtilConfig"):
         self.config = config
+        self._cli = None
 
     @property
     def data(self):
         return self.config.get_plugin_data(self)
 
-    @cached_property
+    @property
     def cli(self) -> "Group":
         from click import Group
 
-        group = Group(self.name, help=self.__doc__)
+        if self._cli is None:
+            self._cli = Group(self.name, help=self.__doc__)
+            self.config.plugin_cli.add_command(self._cli)
 
-        self.config.plugin_cli.add_command(group)
-
-        return group
+        return self._cli
 
     def cli_command(self, name: str):
         def wrapper(f: clickable):

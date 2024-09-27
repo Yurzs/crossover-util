@@ -201,17 +201,43 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
 
         entrypoint = inspect.cleandoc(
             f"""
-                #!{sys.executable}
+                #!/usr/bin/env python3
+                import syslog
+                import logging
                 import sys
-                import time
+                import platform
+                import subprocess
+                import importlib
 
-                import crossover_util
-                from crossover_util.config import config
+                syslog.openlog("CrossOverUtil")
+                logging.basicConfig(filename="/tmp/crossover-util.log", level=logging.DEBUG)
+
+                tries = 0
+                
+                try:
+                    importlib.import_module("crossover_util")
+                except ImportError:
+                    subprocess.check_output(
+                        [sys.executable, "-m", "pip", "install", "--user", "crossover-util"]
+                    )
+
+                try:
+                    import crossover_util
+                    from crossover_util.config import config   
+                except Exception as e:
+                    syslog.syslog(syslog.LOG_ALERT, str(e))
+                    logging.exception("Failed to initialize CrossOverUtil.")
+                    sys.exit(1)
 
                 config.init_plugins()
 
-                if __name__ == '__main__':
-                    sys.exit(config.crossover_plugin.run_crossover())
+                if __name__ == "__main__":
+                    try:
+                        sys.exit(config.crossover_plugin.run_crossover())
+                    except Exception as e:
+                        syslog.syslog(syslog.LOG_ALERT, str(e))
+                        logging.exception("Failed to run CrossOver.")
+                        sys.exit(1)
             """
         )
 

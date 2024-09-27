@@ -1,4 +1,3 @@
-from functools import cached_property
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Set
 
@@ -20,10 +19,11 @@ class UtilConfig(BaseModel):
     )
 
     CONFIG_PATH: ClassVar[Path] = Path("~/.crossover_util/config.json").expanduser()
+    PLUGIN_CLI: ClassVar[Group] = Group("plugin")
 
-    @cached_property
+    @property
     def plugin_cli(self):
-        return Group("plugin")
+        return self.PLUGIN_CLI
 
     @property
     def crossover_plugin(self):
@@ -57,7 +57,7 @@ class UtilConfig(BaseModel):
         except FileNotFoundError:
             data = "{}"
 
-        return cls.model_validate_json(data)
+        return cls.parse_raw(data)
 
     def write(self):
         """Write the config to disk."""
@@ -68,7 +68,7 @@ class UtilConfig(BaseModel):
             config_path.parent.mkdir(parents=True)
 
         with open(config_path, "w") as file:
-            file.write(self.model_dump_json(by_alias=True))
+            file.write(self.json(by_alias=True))
 
     def get_plugin_data(self, plugin: "Plugin") -> Dict[str, Any]:
         self.plugins_data.setdefault(plugin.name, {})

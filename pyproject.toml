@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crossover-util"
-version = "0.1.0"
+version = "0.1.0.1"
 description = "Crossover utility tool"
 authors = ["Yurzs <me@yurzs.dev>"]
 readme = "README.md"
@@ -17,7 +17,7 @@ python = ">=3.8"
 click = "^8.1.7"
 plumbum = "^1.8.3"
 pytz = "^2024.2"
-pydantic = "^2.9.2"
+pydantic = "<2"
 typing-extensions = "^4.12.2"
 
 [build-system]
