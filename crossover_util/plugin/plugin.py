@@ -75,9 +75,9 @@ class Plugin:
 
         plugins = []
 
-        if module_name not in cls.__REGISTRY__:
-            for item in importlib.import_module(module_name).__dict__:
-                if isinstance(item, type) and issubclass(cls, Plugin):
+        for item in importlib.import_module(module_name).__dict__.values():
+            if isinstance(item, type) and issubclass(item, Plugin) and item is not Plugin:
+                if item.check_platform():
                     plugins.append(item)
 
         return plugins
@@ -89,13 +89,22 @@ class Plugin:
         return cls.__REGISTRY__.get(name)
 
     @classmethod
+    def check_platform(cls) -> bool:
+        """Check if the plugin is compatible with the current platform."""
+
+        if sys.platform not in cls.platforms:
+            return False
+
+        if platform.machine() not in cls.arch:
+            return False
+
+        return True
+
+    @classmethod
     def add_plugin(cls, plugin: "Plugin"):
         import click
 
-        if sys.platform not in plugin.platforms:
-            return
-
-        if platform.machine() not in plugin.arch:
+        if not cls.check_platform():
             return
 
         if plugin.name in cls.__REGISTRY__:
@@ -114,9 +123,6 @@ class Plugin:
         """Import and init plugins."""
 
         for plugin in cls.find_plugins_in_module(plugin_module):
-            if sys.platform not in plugin.platforms:
-                continue
-
             cls.add_plugin(plugin(config))
 
 
