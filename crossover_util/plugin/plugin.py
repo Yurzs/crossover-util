@@ -146,5 +146,5 @@ class CrossOverControlPlugin:
     def uninstall(self):
         raise NotImplementedError()
 
-    def run_crossover(self):
+    def run_crossover(self, background: bool = False):
         raise NotImplementedError()

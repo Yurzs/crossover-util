@@ -23,7 +23,7 @@ def cli(ctx: Context):
 def run():
     """Run CrossOver."""
 
-    config.crossover_plugin.run_crossover()
+    config.crossover_plugin.run_crossover(background=True)
 
 
 @cli.command("install")

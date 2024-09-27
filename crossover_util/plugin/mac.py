@@ -163,10 +163,10 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
             if not silent:
                 click.echo("CrossOver has been terminated.")
 
-    def run_crossover(self):
+    def run_crossover(self, background: bool = False):
         """Run CrossOver."""
 
-        from plumbum.cmd import zsh
+        from plumbum.cmd import zsh, NOHUP
 
         ctx = PluginContext()
 
@@ -178,7 +178,12 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         if self.APP_PATH.joinpath("CrossOver.origin").exists():
             bin_path = self.APP_PATH.joinpath("CrossOver.origin")
 
-        zsh["-c"](f"{ctx.env_str} {bin_path.expanduser()} {ctx.args_str}")
+        cmd = zsh["-c"][f"{ctx.env_str} {bin_path.expanduser()} {ctx.args_str}"]
+
+        if background:
+            cmd.nohup()
+        else:
+            cmd()
 
     def install(self):
         """Inject self as the CrossOver process."""
