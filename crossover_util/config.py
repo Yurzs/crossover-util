@@ -57,7 +57,7 @@ class UtilConfig(BaseModel):
         except FileNotFoundError:
             data = "{}"
 
-        return cls.parse_raw(data)
+        return cls.model_validate_json(data)
 
     def write(self):
         """Write the config to disk."""
@@ -68,7 +68,7 @@ class UtilConfig(BaseModel):
             config_path.parent.mkdir(parents=True)
 
         with open(config_path, "w") as file:
-            file.write(self.json(by_alias=True))
+            file.write(self.model_dump_json(by_alias=True))
 
     def get_plugin_data(self, plugin: "Plugin") -> Dict[str, Any]:
         self.plugins_data.setdefault(plugin.name, {})

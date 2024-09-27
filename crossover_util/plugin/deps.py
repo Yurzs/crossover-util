@@ -1,4 +1,5 @@
 import importlib
+import platform
 import sys
 import subprocess
 from subprocess import STDOUT
@@ -24,7 +25,10 @@ class DepsPlugin(Plugin):
 
         try:
             subprocess.check_output(
-                [sys.executable, "-m", "pip", "install", "--user", *packages],
+                [
+                    "arch", platform.machine(),
+                    sys.executable, "-m", "pip", "install", "--user", *packages
+                ],
                 stderr=STDOUT,
             )
         except subprocess.CalledProcessError as e:
