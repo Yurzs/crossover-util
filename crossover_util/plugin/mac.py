@@ -1,4 +1,3 @@
-import importlib
 import inspect
 import os
 import sys
@@ -195,26 +194,14 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         else:
             click.echo("CrossOver is already injected. Updating...")
 
-        self_module = importlib.import_module("crossover_util")
-
         entrypoint = inspect.cleandoc(
             f"""
                 #!{sys.executable}
                 import sys
                 import time
-                import logging
 
-                logging.basicConfig(filename="/tmp/crossover.log", level=logging.DEBUG)
-
-                logging.debug("Waiting for CrossOver to start.")
-
-                # sys.path.insert(1, "{Path(self_module.__path__[0]).parent}")
-                
-                try:
-                    import crossover_util
-                    from crossover_util.config import config
-                except Exception as e:
-                    logging.exception(e)
+                import crossover_util
+                from crossover_util.config import config
 
                 config.init_plugins()
 
