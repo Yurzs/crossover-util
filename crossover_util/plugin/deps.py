@@ -39,6 +39,15 @@ class DepsPlugin(Plugin):
     def add_extra_plugin(self, package: str):
         """Add a plugin to the list of plugins to load."""
 
+        try:
+            importlib.import_module(package)
+            self.config.plugins.add(package)
+            self.config.write()
+
+            return
+        except ImportError:
+            pass
+
         if "git+" in package:
             self.pip_install(package)
             package = package.split("/")[-1].replace(".git", "")
