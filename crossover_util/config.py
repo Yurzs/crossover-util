@@ -6,6 +6,7 @@ from click import Group
 from pydantic import BaseModel, Field
 
 from crossover_util.plugin.plugin import Plugin
+from crossover_util.plugin.reset import ResetPlugin
 
 
 class UtilConfig(BaseModel):
@@ -50,6 +51,7 @@ class UtilConfig(BaseModel):
             FastMathPlugin,
             UE4Plugin,
             PListPlugin,
+            ResetPlugin,
         ]
 
         for plugin in builtin_plugins:
