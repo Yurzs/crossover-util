@@ -7,7 +7,6 @@ from enum import Enum
 from functools import partial
 from typing import List, Type
 
-
 if typing.TYPE_CHECKING:
     from crossover_util.config import UtilConfig
     from crossover_util.plugin.context import PluginContext
@@ -73,12 +72,17 @@ class Plugin:
     def find_plugins_in_module(cls, module_name: str) -> List[Type["Plugin"]]:
         """Find Plugins in module."""
 
+        import click
+
         plugins = []
 
-        for item in importlib.import_module(module_name).__dict__.values():
-            if isinstance(item, type) and issubclass(item, Plugin) and item is not Plugin:
-                if item.check_platform():
-                    plugins.append(item)
+        try:
+            for item in importlib.import_module(module_name).__dict__.values():
+                if isinstance(item, type) and issubclass(item, Plugin) and item is not Plugin:
+                    if item.check_platform():
+                        plugins.append(item)
+        except ImportError:
+            click.echo(f"Module not found `{module_name}`")
 
         return plugins
 

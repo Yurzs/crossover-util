@@ -43,7 +43,8 @@ def uninstall():
 def main():
     config.init_plugins()
 
-    cli.add_command(config.plugin_cli)
+    for name, command in config.plugin_cli.commands.items():
+        cli.add_command(command, name=name)
 
     cli()
 
