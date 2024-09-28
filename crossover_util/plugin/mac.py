@@ -15,7 +15,8 @@ from crossover_util.plugin.plugin import (
     CrossOverControlPlugin,
     Platform,
     Plugin,
-    clickable, restart_required,
+    clickable,
+    restart_required, save_config,
 )
 
 
@@ -40,41 +41,41 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
 
     @clickable
     @restart_required
+    @save_config
     def enable_avx(self):
         """Enable AVX."""
 
-        self.config.get_plugin_data(self)["ROSETTA_ADVERTISE_AVX"] = True
-        self.config.write()
+        self.data["ROSETTA_ADVERTISE_AVX"] = True
 
         click.echo("AVX enabled.")
 
     @clickable
     @restart_required
+    @save_config
     def enable_dxr(self):
         """Enable DirectX Raytracing."""
 
-        self.config.get_plugin_data(self)["D3DM_SUPPORT_DXR"] = True
-        self.config.write()
+        self.data["D3DM_SUPPORT_DXR"] = True
 
         click.echo("DirectX Raytracing enabled.")
 
     @clickable
     @restart_required
+    @save_config
     def disable_avx(self):
         """Disable AVX."""
 
-        self.config.get_plugin_data(self)["ROSETTA_ADVERTISE_AVX"] = False
-        self.config.write()
+        self.data["ROSETTA_ADVERTISE_AVX"] = False
 
         click.echo("AVX disabled.")
 
     @clickable
     @restart_required
+    @save_config
     def disable_dxr(self):
         """Disable DirectX Raytracing."""
 
-        self.config.get_plugin_data(self)["D3DM_SUPPORT_DXR"] = False
-        self.config.write()
+        self.data["D3DM_SUPPORT_DXR"] = False
 
         click.echo("DirectX Raytracing disabled.")
 

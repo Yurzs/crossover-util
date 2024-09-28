@@ -180,3 +180,14 @@ def restart_required(f):
                 self.config.crossover_plugin.run_crossover(background=True)
 
     return wrapper
+
+
+def save_config(f):
+    @wraps(f)
+    def wrapper(self: "Plugin", *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        finally:
+            self.config.write()
+
+    return wrapper
