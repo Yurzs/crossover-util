@@ -26,8 +26,14 @@ class DepsPlugin(Plugin):
         try:
             subprocess.check_output(
                 [
-                    "arch", f"-{platform.machine()}",
-                    sys.executable, "-m", "pip", "install", "--user", *packages
+                    "arch",
+                    f"-{platform.machine()}",
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--user",
+                    *packages,
                 ],
                 stderr=STDOUT,
             )

@@ -5,8 +5,11 @@ import click
 from click import Group
 from pydantic import BaseModel, Field
 
+from crossover_util.plugin.dxvk import DXVKPlugin
+from crossover_util.plugin.fastmath import FastMathPlugin
 from crossover_util.plugin.linux import LinuxPlugin
 from crossover_util.plugin.plugin import Plugin
+from crossover_util.plugin.ue4 import UE4Plugin
 
 
 class UtilConfig(BaseModel):
@@ -40,7 +43,7 @@ class UtilConfig(BaseModel):
 
         from crossover_util.plugin.mac import MacPlugin
 
-        for plugin in [MacPlugin, LinuxPlugin]:
+        for plugin in [MacPlugin, LinuxPlugin, DXVKPlugin, FastMathPlugin, UE4Plugin]:
             Plugin.add_plugin(plugin(self))
 
         for plugin_module in self.plugins:
