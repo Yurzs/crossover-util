@@ -1,8 +1,12 @@
+import click
+
 from crossover_util.plugin.plugin import Plugin, clickable
 from crossover_util.plugin.context import PluginContext
 
 
 class DXVKPlugin(Plugin):
+    """Plugin to manage DXVK."""
+
     name = "dxvk"
 
     @property
@@ -15,11 +19,15 @@ class DXVKPlugin(Plugin):
 
         self.data["async"] = True
 
+        click.echo("Async compute enabled.")
+
     @clickable
     def disable_async(self):
         """Disable async compute."""
 
-        self.data["async"] = False
+        self.data.pop("async", None)
+
+        click.echo("Async compute disabled.")
 
     def on_load(self):
         self.cli_command("enable-async")(self.enable_async)

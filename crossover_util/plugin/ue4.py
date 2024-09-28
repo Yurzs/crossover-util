@@ -1,7 +1,11 @@
+import click
+
 from crossover_util.plugin.plugin import Plugin, clickable
 
 
 class UE4Plugin(Plugin):
+    """Plugin to manage UE4 compatibility."""
+
     name = "ue4"
 
     @property
@@ -14,11 +18,15 @@ class UE4Plugin(Plugin):
 
         self.data.pop("disabled", None)
 
+        click.echo("UE4 compatibility enabled.")
+
     @clickable
     def disable(self):
         """Disable UE4 compatibility."""
 
         self.data["disabled"] = True
+
+        click.echo("UE4 compatibility disabled.")
 
     def on_load(self):
         self.cli_command("enable")(self.enable)
