@@ -4,7 +4,7 @@ import platform
 import sys
 import typing
 from enum import Enum
-from functools import partial
+from functools import partial, wraps
 from typing import List, Type
 
 if typing.TYPE_CHECKING:
@@ -152,6 +152,10 @@ class clickable:  # noqa
 
 
 class CrossOverControlPlugin:
+    @property
+    def is_running(self):
+        raise NotImplementedError()
+
     def kill_crossover(self):
         raise NotImplementedError()
 
@@ -163,3 +167,16 @@ class CrossOverControlPlugin:
 
     def run_crossover(self, background: bool = False):
         raise NotImplementedError()
+
+
+def restart_required(f):
+    @wraps(f)
+    def wrapper(self: "Plugin", *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        finally:
+            if self.config.crossover_plugin.is_running:
+                self.config.crossover_plugin.kill_crossover()
+                self.config.crossover_plugin.run_crossover(background=True)
+
+    return wrapper

@@ -1,6 +1,6 @@
 import click
 
-from crossover_util.plugin.plugin import Plugin, clickable
+from crossover_util.plugin.plugin import Plugin, clickable, restart_required
 from crossover_util.plugin.context import PluginContext
 
 
@@ -14,6 +14,7 @@ class FastMathPlugin(Plugin):
         return self.data.get("enabled", False)
 
     @clickable
+    @restart_required
     def enable(self):
         """Enable fast math."""
 
@@ -22,6 +23,7 @@ class FastMathPlugin(Plugin):
         click.echo("Fast math enabled.")
 
     @clickable
+    @restart_required
     def disable(self):
         """Disable fast math."""
 

@@ -15,7 +15,7 @@ from crossover_util.plugin.plugin import (
     CrossOverControlPlugin,
     Platform,
     Plugin,
-    clickable,
+    clickable, restart_required,
 )
 
 
@@ -34,7 +34,12 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
     GPTK_PATH = Path("/Volumes/Evaluation environment for Windows games 2.0")
     APP_PATH = Path("/Applications/CrossOver.app/Contents/MacOS")
 
+    @property
+    def is_running(self):
+        return bool(self.find_pids())
+
     @clickable
+    @restart_required
     def enable_avx(self):
         """Enable AVX."""
 
@@ -44,6 +49,7 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         click.echo("AVX enabled.")
 
     @clickable
+    @restart_required
     def enable_dxr(self):
         """Enable DirectX Raytracing."""
 
@@ -53,6 +59,7 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         click.echo("DirectX Raytracing enabled.")
 
     @clickable
+    @restart_required
     def disable_avx(self):
         """Disable AVX."""
 
@@ -62,6 +69,7 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         click.echo("AVX disabled.")
 
     @clickable
+    @restart_required
     def disable_dxr(self):
         """Disable DirectX Raytracing."""
 
