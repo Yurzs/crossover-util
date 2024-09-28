@@ -1,7 +1,9 @@
 import inspect
 import os
 import time
+import typing
 import webbrowser
+from functools import cached_property
 from pathlib import Path
 from typing import List
 
@@ -16,8 +18,12 @@ from crossover_util.plugin.plugin import (
     Platform,
     Plugin,
     clickable,
-    restart_required, save_config,
+    restart_required,
+    save_config,
 )
+
+if typing.TYPE_CHECKING:
+    from crossover_util.plugin.plist import PlistPlugin
 
 
 class MacPlugin(Plugin, CrossOverControlPlugin):
@@ -38,6 +44,10 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
     @property
     def is_running(self):
         return bool(self.find_pids())
+
+    @cached_property
+    def plist(self) -> "PlistPlugin":
+        return Plugin.get_plugin("plist")
 
     @clickable
     @restart_required
@@ -128,6 +138,8 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         self.cli_command("disable-avx")(self.disable_avx)
         self.cli_command("disable-dxr")(self.disable_dxr)
         self.cli_command("patch-gptk")(self.patch_gptk)
+        self.cli_command("enable-update")(self.enable_update)
+        self.cli_command("disable-update")(self.disable_update)
 
     def on_start(self, ctx: PluginContext):
         if self.data.get("ROSETTA_ADVERTISE_AVX"):
@@ -268,3 +280,23 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         if self.APP_PATH.joinpath("CrossOver.origin").exists():
             mv[bin_path.with_suffix(".origin"), bin_path]()
             click.echo("CrossOver has been restored.")
+
+    @clickable
+    def disable_update(self):
+        """Disable CrossOver updates."""
+
+        ctx = click.get_current_context()
+
+        ctx.invoke(self.plist.set, key="SUFeedURL", value="")
+
+        click.echo("CrossOver updates disabled.")
+
+    @clickable
+    def enable_update(self):
+        """Enable CrossOver updates."""
+
+        ctx = click.get_current_context()
+
+        ctx.invoke(self.plist.set, key="SUFeedURL", value=None)
+
+        click.echo("CrossOver updates enabled.")

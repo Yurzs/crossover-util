@@ -20,7 +20,7 @@ class DepsPlugin(Plugin):
     name = "deps"
 
     @staticmethod
-    def pip_install(*packages: str):
+    def pip_install(*packages: str, allow_error: bool = False):
         """Install package using pip."""
 
         try:
@@ -38,6 +38,9 @@ class DepsPlugin(Plugin):
                 stderr=STDOUT,
             )
         except subprocess.CalledProcessError as e:
+            if allow_error:
+                return
+
             raise click.UsageError(e.output.decode())
 
     @click.argument("package")
@@ -109,4 +112,4 @@ class DepsPlugin(Plugin):
                 plugins_to_install.add(plugin)
 
         if plugins_to_install:
-            self.pip_install(*plugins_to_install)
+            self.pip_install(*plugins_to_install, allow_error=True)

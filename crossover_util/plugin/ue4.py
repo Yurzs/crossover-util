@@ -1,6 +1,11 @@
 import click
 
-from crossover_util.plugin.plugin import Plugin, clickable, restart_required, save_config
+from crossover_util.plugin.plugin import (
+    Plugin,
+    clickable,
+    restart_required,
+    save_config,
+)
 
 
 class UE4Plugin(Plugin):
