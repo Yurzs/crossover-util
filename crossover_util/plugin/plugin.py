@@ -149,7 +149,7 @@ class Plugin:
     def add_plugin(cls, plugin: "Plugin"):
         import click
 
-        if not cls.check_platform():
+        if not plugin.check_platform():
             return
 
         if plugin.name in cls.__REGISTRY__:
