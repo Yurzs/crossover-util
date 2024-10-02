@@ -5,13 +5,13 @@ This is a collection of utility functions that I have written over the years. I 
 ## Installation
 
 ```bash
-pip install --user crossover-util
+pip install --user cx-tool
 ```
 
 ## Usage
 
 ```zsh
-crossover-util install
+cx-tool install
 ```
 
 ## Write your own plugin
@@ -54,5 +54,5 @@ class MyPlugin(Plugin):
 To access `hello` click subcommand command use the following command
 
 ```zsh
-crossover-util plugin my-plugin hello
+cx-tool my-plugin hello
 ```

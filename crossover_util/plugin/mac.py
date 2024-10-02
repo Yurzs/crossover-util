@@ -337,9 +337,6 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
                 import syslog
                 import logging
                 import sys
-                from setproctitle import setproctitle
-
-                setproctitle("CrossOverUtil")
 
                 LOG_PATH = "{self.LOG_PATH}"
 

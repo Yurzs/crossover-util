@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import List
 import configparser
@@ -58,9 +59,13 @@ class BottlePlugin(Plugin):
         console = Console()
         console.print(table)
 
+    @click.option("--edit", is_flag=True, help="Edit the bottle configuration file.")
     @clickable
-    def show_conf(self, bottle_path: Path, conf_name: str):
+    def show_conf(self, bottle_path: Path, conf_name: str, edit: bool):
         """Open bottle configuration file."""
+
+        if edit:
+            return click.edit(filename=bottle_path.joinpath(conf_name), require_save=False)
 
         conf = self.get_bottle_config(bottle_path, conf_name)
         console = Console()
