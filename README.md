@@ -1,4 +1,4 @@
-# CrossOver-Util
+# CX-tool
 
 This is a collection of utility functions that I have written over the years. I have decided to put them all in one place so that I can easily access them. I have also included a few utility functions that I have found useful from other sources.
 
