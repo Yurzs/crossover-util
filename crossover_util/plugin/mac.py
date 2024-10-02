@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import List
 
 import click
-from plumbum import ProcessExecutionError
+from plumbum import ProcessExecutionError, local
 from plumbum.cmd import mv, ditto, rm
+from plumbum.commands.base import BoundCommand
 
 from crossover_util.plugin.context import PluginContext
 from crossover_util.plugin.plugin import (
@@ -40,14 +41,57 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
 
     GPTK_PATH = Path("/Volumes/Evaluation environment for Windows games 2.0")
     APP_PATH = Path("/Applications/CrossOver.app/Contents/MacOS")
+    VENV_PATH = APP_PATH.joinpath(".venv")
+    LOG_PATH = APP_PATH.joinpath("crossover-util.log")
 
     @property
     def is_running(self):
         return bool(self.find_pids())
 
     @cached_property
+    def architecture(self) -> BoundCommand:
+        return local.get("arch")["-x86_64"]
+
+    @cached_property
+    def python(self) -> BoundCommand:
+        return self.architecture[self.VENV_PATH.joinpath("bin/python")]
+
+    @cached_property
+    def venv(self):
+        return super().python["-m", "venv"]
+
+    @cached_property
+    def pip(self) -> BoundCommand:
+        return self.python["-m", "pip"]
+
+    @property
+    def bottles_path(self) -> Path:
+        return Path(
+            self.data.get(
+                "bottles_path",
+                "~/Library/Application Support/CrossOver/Bottles/",
+            )
+        ).expanduser()
+
+    @cached_property
     def plist(self) -> "PlistPlugin":
         return Plugin.get_plugin("plist")
+
+    @cached_property
+    def avx_group(self):
+        return self.cli.group("avx", help="Manage AVX settings")(lambda: None)
+
+    @cached_property
+    def dxr_group(self):
+        return self.cli.group("dxr", help="Manage DXR settings")(lambda: None)
+
+    @cached_property
+    def update_group(self):
+        return self.cli.group("update", help="Manage CrossOver updates")(lambda: None)
+
+    @cached_property
+    def gptk_group(self):
+        return self.cli.group("gptk", help="Manage GPTK")(lambda: None)
 
     @clickable
     @restart_required
@@ -88,6 +132,14 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         self.data["D3DM_SUPPORT_DXR"] = False
 
         click.echo("DirectX Raytracing disabled.")
+
+    @clickable
+    def download_gptk(self):
+        """Download Game Porting Toolkit."""
+
+        return webbrowser.open(
+            "https://developer.apple.com/games/game-porting-toolkit/"
+        )
 
     @clickable
     def patch_gptk(self):
@@ -132,14 +184,58 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
 
         click.echo("GPTK patched")
 
+    @clickable
+    def rollback_gptk(self):
+        """Rollback Game Porting Toolkit."""
+
+        crossover_gptk_path = Path(
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver"
+            "/lib64/apple_gptk/external"
+        )
+
+        if not os.path.exists(crossover_gptk_path):
+            click.echo("GPTK not found.")
+            return
+
+        old_metal = crossover_gptk_path.joinpath("D3DMetal.framework-old")
+        old_shared = crossover_gptk_path.joinpath("libd3dshared.dylib-old")
+
+        if not old_metal.exists() or not old_shared.exists():
+            click.echo("Backup not found.")
+            return
+
+        rm["-rf", crossover_gptk_path.joinpath("D3DMetal.framework")]()
+        rm["-rf", crossover_gptk_path.joinpath("libd3dshared.dylib")]()
+
+        mv[
+            crossover_gptk_path.joinpath("D3DMetal.framework-old"),
+            crossover_gptk_path.joinpath("D3DMetal.framework"),
+        ]()
+
+        mv[
+            crossover_gptk_path.joinpath("libd3dshared.dylib-old"),
+            crossover_gptk_path.joinpath("libd3dshared.dylib"),
+        ]()
+
+        click.echo("GPTK rolled back.")
+
     def on_load(self):
-        self.cli_command("enable-avx")(self.enable_avx)
-        self.cli_command("enable-dxr")(self.enable_dxr)
-        self.cli_command("disable-avx")(self.disable_avx)
-        self.cli_command("disable-dxr")(self.disable_dxr)
-        self.cli_command("patch-gptk")(self.patch_gptk)
-        self.cli_command("enable-update")(self.enable_update)
-        self.cli_command("disable-update")(self.disable_update)
+        # AVX
+        self.cli_command("enable", self.avx_group)(self.enable_avx)
+        self.cli_command("disable", self.avx_group)(self.disable_avx)
+
+        # DXR
+        self.cli_command("enable", self.dxr_group)(self.enable_dxr)
+        self.cli_command("disable", self.dxr_group)(self.disable_dxr)
+
+        # Update
+        self.cli_command("enable", self.update_group)(self.enable_update)
+        self.cli_command("disable", self.update_group)(self.disable_update)
+
+        # GPTK
+        self.cli_command("patch", self.gptk_group)(self.patch_gptk)
+        self.cli_command("download", self.gptk_group)(self.download_gptk)
+        self.cli_command("rollback", self.gptk_group)(self.rollback_gptk)
 
     def on_start(self, ctx: PluginContext):
         if self.data.get("ROSETTA_ADVERTISE_AVX"):
@@ -200,8 +296,13 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
 
         cmd = zsh["-c"][f"{ctx.env_str} {bin_path.expanduser()} {ctx.args_str}"]
 
+        crossover_log = self.APP_PATH.joinpath("crossover.log")
+
         if background:
-            cmd.nohup()
+            cmd.nohup(
+                stdout=crossover_log,
+                stderr=crossover_log,
+            )
         else:
             cmd()
 
@@ -219,48 +320,39 @@ class MacPlugin(Plugin, CrossOverControlPlugin):
         else:
             click.echo("CrossOver is already injected. Updating...")
 
+        rm["-rf", self.VENV_PATH]()
+
+        click.echo("Creating virtual environment...")
+        self.venv(self.VENV_PATH)
+
+        click.echo("Installing crossover-util...")
+        self.pip["install", "--upgrade", "pip"]()
+        self.pip["install", "--ignore-installed", "crossover-util"]()
+
+        click.echo("Injecting CrossOver patch...")
+
         entrypoint = inspect.cleandoc(
-            """
-                #!/usr/bin/env python3
+            f"""
+                #!{self.python}
                 import syslog
                 import logging
                 import sys
-                import platform
-                import subprocess
-                import importlib
+                from setproctitle import setproctitle
+
+                setproctitle("CrossOverUtil")
+
+                LOG_PATH = "{self.LOG_PATH}"
 
                 syslog.openlog("CrossOverUtil")
-                logging.basicConfig(filename="/tmp/crossover-util.log", level=logging.DEBUG)
+                logging.basicConfig(filename=LOG_PATH, level=logging.DEBUG)
 
-                try:
-                    importlib.import_module("crossover_util")
-                except ImportError:
-                    subprocess.check_output(
-                        [
-                            "arch", f"-{platform.machine()}", 
-                            sys.executable, "-m", "pip", "install", "--user", "--upgrade",
-                            "--ignore-installed",
-                            "crossover-util"
-                        ]
-                    )
-
-                try:
-                    import crossover_util
-                    from crossover_util.config import config   
-                except Exception as e:
-                    syslog.syslog(syslog.LOG_ALERT, str(e))
-                    logging.exception("Failed to initialize CrossOverUtil.")
-                    sys.exit(1)
+                import crossover_util
+                from crossover_util.config import config   
 
                 config.init_plugins()
 
                 if __name__ == "__main__":
-                    try:
-                        sys.exit(config.crossover_plugin.run_crossover())
-                    except Exception as e:
-                        syslog.syslog(syslog.LOG_ALERT, str(e))
-                        logging.exception("Failed to run CrossOver.")
-                        sys.exit(1)
+                    sys.exit(config.crossover_plugin.run_crossover())
             """
         )
 

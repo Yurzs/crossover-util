@@ -1,11 +1,17 @@
+import copy
 import importlib
 import inspect
-import platform
 import sys
+
 import typing
 from enum import Enum
-from functools import partial, wraps
-from typing import List, Type
+from functools import lru_cache, partial, wraps
+from pathlib import Path
+from typing import List, Type, Optional, ClassVar
+
+from plumbum import local
+from plumbum.commands.base import BoundCommand
+
 
 if typing.TYPE_CHECKING:
     from crossover_util.config import UtilConfig
@@ -48,14 +54,45 @@ class Plugin:
 
         return self._cli
 
-    def cli_command(self, name: str):
+    @property
+    def python(self) -> BoundCommand:
+        return local.get(sys.executable)
+
+    @classmethod
+    @lru_cache
+    def get_arch(cls) -> str:
+        return local.get(sys.executable)[
+            "-c", "import platform;print(platform.machine())"
+        ]().strip()
+
+    @classmethod
+    @lru_cache
+    def get_platform(cls) -> str:
+        return local.get(sys.executable)[
+            "-c", "import sys;print(sys.platform)"
+        ]().strip()
+
+    def cli_command(
+        self,
+        name: str,
+        cli: Optional["Group"] = None,
+        no_args_is_help: Optional[bool] = None,
+        **kwargs,
+    ):
         def wrapper(f: clickable):
-            return self.cli.command(
+            cli_ = cli or self.cli
+
+            return cli_.command(
                 name,
                 context_settings=dict(
                     allow_extra_args=True,
                 ),
-                no_args_is_help=bool(set(inspect.signature(f.f).parameters) - {"self"}),
+                no_args_is_help=(
+                    no_args_is_help
+                    if no_args_is_help is not None
+                    else bool(set(inspect.signature(f.f).parameters) - {"self"})
+                ),
+                **kwargs,
             )(f.with_plugin(self))
 
         return wrapper
@@ -100,10 +137,10 @@ class Plugin:
     def check_platform(cls) -> bool:
         """Check if the plugin is compatible with the current platform."""
 
-        if sys.platform not in cls.platforms:
+        if cls.get_platform() not in cls.platforms:
             return False
 
-        if platform.machine() not in cls.arch:
+        if cls.get_arch() not in cls.arch:
             return False
 
         return True
@@ -137,11 +174,19 @@ class Plugin:
 class clickable:  # noqa
     def __init__(self, f):
         self.f = f
+        self.args = []
+        self.kwargs = {}
         self.orig_func = f
 
     def with_plugin(self, plugin: "Plugin") -> "clickable":
-        self.f = partial(self.f, plugin)
+        self.f = partial(self.f, *[plugin, *self.args], **self.kwargs)
         return self
+
+    def partial(self, *args, **kwargs):
+        clickable_ = copy.deepcopy(self)
+        clickable_.args.extend(args)
+        clickable_.kwargs.update(kwargs)
+        return clickable_
 
     def __call__(self, *args, **kwargs):
         return self.f(*args, **kwargs)
@@ -152,8 +197,27 @@ class clickable:  # noqa
 
 
 class CrossOverControlPlugin:
+    VENV_PATH: ClassVar[Path]
+    LOG_PATH: ClassVar[Path]
+
     @property
     def is_running(self):
+        raise NotImplementedError()
+
+    @property
+    def bottles_path(self) -> Path:
+        raise NotImplementedError()
+
+    @property
+    def python(self) -> BoundCommand:
+        raise NotImplementedError()
+
+    @property
+    def venv(self) -> BoundCommand:
+        raise NotImplementedError()
+
+    @property
+    def pip(self) -> BoundCommand:
         raise NotImplementedError()
 
     def kill_crossover(self):

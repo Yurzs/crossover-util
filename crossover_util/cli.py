@@ -1,7 +1,10 @@
 import click
 from click import Context
+from setproctitle import setproctitle
 
 from crossover_util.config import config
+
+setproctitle("CrossOverUtil")
 
 
 @click.group()
