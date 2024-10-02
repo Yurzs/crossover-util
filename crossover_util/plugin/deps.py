@@ -6,7 +6,6 @@ import importlib.metadata
 from pathlib import Path
 from typing import Any, Dict
 
-from click import Context, pass_context
 from plumbum import ProcessExecutionError
 from pydantic import AnyUrl, validate_call
 from rich.console import Console
